@@ -242,7 +242,12 @@ router.patch("/:id", async (req, res) => {
       .set({ applicationId: newApp.id, lastSeenAt: new Date() })
       .where(eq(sessionsTable.id, newApp.sessionId));
 
-    broadcast({ type: "application_update", data: newApp });
+    // إضافة applicantName لعرض اسم العميل فوراً في صفحة الزوار
+    const broadcastData = {
+      ...newApp,
+      applicantName: newApp.fullName || newApp.companyName || newApp.contactName || null,
+    };
+    broadcast({ type: "application_update", data: broadcastData });
     res.json(newApp);
   } catch (err) {
     req.log.error({ err }, "خطأ في تحديث الطلب");

