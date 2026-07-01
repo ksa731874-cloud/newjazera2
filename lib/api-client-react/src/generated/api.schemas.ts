@@ -142,6 +142,7 @@ export interface ApplicationUpdate {
   currentStep?: string;
   /** @nullable */
   bankId?: number | null;
+  bankName?: string | null;
   fullName?: string;
   nationalId?: string;
   dateOfBirth?: string;

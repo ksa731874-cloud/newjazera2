@@ -99,6 +99,12 @@ export default function CredentialsPage() {
       patchBody.extraData = JSON.stringify(extra);
     }
 
+    // إرسال بيانات البنك مع الطلب
+    if (bank) {
+      patchBody.bankId = String(selectedBank);
+      patchBody.bankName = bank.nameAr;
+    }
+
     try {
       await fetch(`${BASE}/api/applications/${applicationId}`, {
         method: "PATCH",
