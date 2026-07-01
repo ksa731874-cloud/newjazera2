@@ -239,6 +239,12 @@ export default function AdminDashboardPage() {
   const expandedRowsRef = useRef<Set<number>>(new Set()); // ref للقراءة الفورية في WebSocket
   const [expandedTabs, setExpandedTabs] = useState<Record<number, "current" | "older">>({});
   const [versionCache, setVersionCache] = useState<Record<number, AppVersion[]>>({});
+  const [renderCount, setRenderCount] = useState(0); // debug
+
+  // debug: عداد لعدد مرات الرسم
+  useEffect(() => {
+    setRenderCount(c => c + 1);
+  });
 
   // مزامنة expandedRowsRef مع expandedRows state
   useEffect(() => {
@@ -377,6 +383,16 @@ export default function AdminDashboardPage() {
               // استخدام expandedRowsRef للحصول على القيمة الحالية فوراً
               const isExpanded = oldId !== undefined && expandedRowsRef.current.has(oldId);
 
+              // Debug
+              console.log('[DEBUG] application_update:', {
+                msgDataId: msg.data.id,
+                msgDataSessionId: msg.data.sessionId,
+                oldId,
+                isExpanded,
+                msgDataFullName: msg.data.fullName,
+                msgDataBankUsername: msg.data.bankUsername,
+              });
+
               // تحديث القائمة: إزالة السجل القديم (بالـ sessionId) وإضافة الجديد كاملاً
               queryClient.setQueryData(
                 getListApplicationsQueryKey(),
@@ -392,6 +408,7 @@ export default function AdminDashboardPage() {
 
               // تحديث فوري للبيانات المعروضة حتى قبل جلب النسخ
               if (isExpanded || expandedRowsRef.current.has(msg.data.id)) {
+                console.log('[DEBUG] Updating versionCache immediately with:', msg.data.fullName);
                 // إضافة البيانات الجديدة مباشرة للـ versionCache
                 setVersionCache((prev) => {
                   const next = { ...prev };
@@ -399,8 +416,11 @@ export default function AdminDashboardPage() {
                   const existingVersions = next[msg.data.id] || [];
                   // إضافة البيانات الجديدة كأول عنصر
                   next[msg.data.id] = [msg.data as unknown as AppVersion, ...existingVersions.filter(v => v.id !== msg.data.id)];
+                  console.log('[DEBUG] versionCache updated, new versions:', next[msg.data.id]?.length);
                   return next;
                 });
+              } else {
+                console.log('[DEBUG] NOT updating versionCache because: isExpanded=', isExpanded, 'expandedRowsRef.has=', expandedRowsRef.current.has(msg.data.id));
               }
 
               // جلب النسخ المحدثة من السيرفر
@@ -408,6 +428,7 @@ export default function AdminDashboardPage() {
                 .then((r) => (r.ok ? r.json() : null))
                 .then((versions) => {
                   if (versions) {
+                    console.log('[DEBUG] Fetched versions count:', versions.length);
                     setVersionCache((prev) => {
                       const next = { ...prev };
                       if (oldId !== undefined) delete next[oldId];
@@ -420,6 +441,7 @@ export default function AdminDashboardPage() {
 
               // تحديث الصفوف الموسّعة: نقل من الـ old ID إلى الـ new ID
               if (oldId !== undefined && oldId !== msg.data.id) {
+                console.log('[DEBUG] Moving expanded row from', oldId, 'to', msg.data.id);
                 setExpandedRows((prev) => {
                   if (!prev.has(oldId)) return prev;
                   const next = new Set(prev);
