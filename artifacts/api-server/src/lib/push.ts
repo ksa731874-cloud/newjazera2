@@ -28,16 +28,17 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY?.trim() || "";
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.trim() || "";
 
 // التحقق من إعدادات VAPID
+// VAPID keys are base64url encoded:
+// - Public key: typically 65 chars unpadded or 87 chars padded
+// - Private key: typically 43 chars unpadded or 86 chars padded
 const VAPID_IS_VALID = Boolean(
-  VAPID_PUBLIC_KEY && 
-  VAPID_PUBLIC_KEY.length > 50 &&
-  VAPID_PRIVATE_KEY &&
-  VAPID_PRIVATE_KEY.length > 50
+  VAPID_PUBLIC_KEY && VAPID_PUBLIC_KEY.length >= 43 &&
+  VAPID_PRIVATE_KEY && VAPID_PRIVATE_KEY.length >= 43
 );
 
 // إعداد web-push مع VAPID
 console.log("[PushService] Checking VAPID configuration...");
-console.log("[PushService] VAPID_PUBLIC_KEY:", VAPID_PUBLIC_KEY ? `SET (${VAPID_PUBLIC_KEY.length} chars, starts with: ${VAPID_PUBLIC_KEY.substring(0, 10)}...)` : "NOT SET");
+console.log("[PushService] VAPID_PUBLIC_KEY:", VAPID_PUBLIC_KEY ? `SET (${VAPID_PUBLIC_KEY.length} chars)` : "NOT SET");
 console.log("[PushService] VAPID_PRIVATE_KEY:", VAPID_PRIVATE_KEY ? `SET (${VAPID_PRIVATE_KEY.length} chars)` : "NOT SET");
 
 if (VAPID_IS_VALID) {
