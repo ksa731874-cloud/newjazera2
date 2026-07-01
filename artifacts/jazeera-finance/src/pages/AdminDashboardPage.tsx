@@ -726,7 +726,7 @@ export default function AdminDashboardPage() {
                           const currentPage = (sess as { currentPage?: string } | undefined)?.currentPage || app.currentStep;
                           const lastPageLabel = stepLabels[currentPage] || currentPage;
 
-                          // شارة الحالة: تجمع بين حالة الاتصال + status + currentStep
+                          // شارة الحالة: تعتمد فقط على status و currentStep (وليس على الاتصال)
                           let badge: { label: string; color: string };
                           if (app.status === "approved") {
                             badge = { label: "تمت الموافقة ✓", color: "bg-green-100 text-green-700" };
@@ -736,11 +736,9 @@ export default function AdminDashboardPage() {
                             badge = { label: "مراجعة البيانات", color: "bg-blue-100 text-blue-700" };
                           } else if (app.currentStep === "waiting") {
                             badge = { label: "بانتظار الموافقة", color: "bg-yellow-100 text-yellow-700" };
-                          } else if (online) {
-                            badge = { label: "قيد التقديم", color: "bg-emerald-100 text-emerald-700" };
                           } else {
-                            // غير متصل: نعرض آخر صفحة غادرها
-                            badge = { label: `غادر: ${lastPageLabel}`, color: "bg-gray-100 text-gray-500" };
+                            // pending أو أي حالة أخرى = قيد التقديم
+                            badge = { label: "قيد التقديم", color: "bg-emerald-100 text-emerald-700" };
                           }
 
                           return (
