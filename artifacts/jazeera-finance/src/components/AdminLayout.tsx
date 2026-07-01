@@ -4,7 +4,7 @@ import { useAdminLogout, useGetAdminMe } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, Building2, Settings, LogOut,
-  ClipboardList, Wifi, Eye, KeyRound, FileEdit, Trash2, Menu, X
+  ClipboardList, Wifi, Eye, KeyRound, FileEdit, Trash2, Menu, X, Smartphone
 } from "lucide-react";
 import AdminNotificationCenter from "./AdminNotificationCenter";
 
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/admin/banks", label: "إدارة البنوك", icon: <Building2 className="w-5 h-5" /> },
   { href: "/admin/page-editor", label: "تعديل المحتوى", icon: <FileEdit className="w-5 h-5" /> },
   { href: "/admin/settings", label: "إعدادات الموقع", icon: <Settings className="w-5 h-5" /> },
+  { href: "/admin/devices", label: "الأجهزة الموثوقة", icon: <Smartphone className="w-5 h-5" /> },
   { href: "/admin/change-password", label: "تغيير كلمة السر", icon: <KeyRound className="w-5 h-5" /> },
 ];
 

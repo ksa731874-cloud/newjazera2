@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAdminLogin, useGetAdminMe } from "@workspace/api-client-react";
-import { Building2, Lock, User, Eye, EyeOff, ShieldCheck, Smartphone, CheckCircle } from "lucide-react";
+import { Building2, Lock, User, Eye, EyeOff, ShieldCheck, Smartphone, CheckCircle, Bell } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -49,6 +49,9 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [trusting, setTrusting] = useState(false);
   const [trusted, setTrusted] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof Notification !== "undefined" ? Notification.permission : "default"
+  );
   const login = useAdminLogin();
   const deviceId = getDeviceId();
   const deviceInfo = getDeviceInfo();
@@ -70,6 +73,11 @@ export default function AdminLoginPage() {
       }
     };
     checkTrusted();
+    
+    // تحديث حالة إذن الإشعارات
+    if ("Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    }
   }, []);
 
   // التحقق من وجود جلسة إدارية نشطة
@@ -79,6 +87,71 @@ export default function AdminLoginPage() {
       staleTime: 0,
     },
   });
+
+  // ─── الاشتراك في Push Notifications ───────────────────────────────────
+  const subscribeToPush = async (): Promise<boolean> => {
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      return false;
+    }
+
+    try {
+      // التحقق من وجود Service Worker
+      if (!("serviceWorker" in navigator)) {
+        console.log("Service Worker not supported");
+        return false;
+      }
+
+      const reg = await navigator.serviceWorker.ready;
+      
+      // الحصول على VAPID public key
+      const vapidRes = await fetch(`${BASE}/api/push/vapid-public-key`);
+      if (!vapidRes.ok) {
+        console.log("Failed to get VAPID key");
+        return false;
+      }
+      
+      const { publicKey } = await vapidRes.json();
+      if (!publicKey) {
+        console.log("No VAPID public key configured");
+        return false;
+      }
+
+      // الاشتراك في Push
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+
+      // حفظ الاشتراك في السيرفر
+      const saveRes = await fetch(`${BASE}/api/auth/devices/${deviceId}/push-subscription`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub.toJSON() }),
+      });
+
+      return saveRes.ok;
+    } catch (err) {
+      console.error("Push subscription failed:", err);
+      return false;
+    }
+  };
+
+  // ─── تفعيل الإشعارات ─────────────────────────────────────────────────
+  const handleEnableNotifications = async () => {
+    if (!("Notification" in window)) {
+      setError("المتصفح لا يدعم الإشعارات");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+
+    if (permission === "granted") {
+      // الاشتراك في Push
+      await subscribeToPush();
+    }
+  };
 
   // تسجيل دخول المدير
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,30 +176,11 @@ export default function AdminLoginPage() {
         }),
       });
       
-      // الاشتراك في Push Notifications
-      if ("Notification" in window && Notification.permission === "granted") {
-        try {
-          const reg = await navigator.serviceWorker.ready;
-          const vapidRes = await fetch(`${BASE}/api/push/vapid-public-key`);
-          if (vapidRes.ok) {
-            const { publicKey } = await vapidRes.json();
-            if (publicKey) {
-              const sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicKey),
-              });
-              
-              await fetch(`${BASE}/api/auth/devices/${deviceId}/push-subscription`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subscription: sub.toJSON() }),
-              });
-            }
-          }
-        } catch {
-          // تجاهل أخطاء Push
-        }
+      // الاشتراك في Push (إذا لم يكن مفعلاً)
+      if (notificationPermission !== "granted") {
+        await handleEnableNotifications();
+      } else {
+        await subscribeToPush();
       }
       
       setTrusted(true);
@@ -254,21 +308,26 @@ export default function AdminLoginPage() {
           )}
 
           {/* طلب إذن الإشعارات */}
-          {!trusted && "Notification" in window && Notification.permission === "default" && (
+          {"Notification" in window && notificationPermission !== "granted" && (
             <button
               type="button"
-              onClick={async () => {
-                const perm = await Notification.requestPermission();
-                if (perm === "granted") {
-                  // طلب التحديث
-                  setError("");
-                }
-              }}
+              onClick={handleEnableNotifications}
               className="mt-4 w-full py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 text-sm font-medium hover:bg-blue-500/20 transition flex items-center justify-center gap-2"
             >
-              <Smartphone className="w-4 h-4" />
+              <Bell className="w-4 h-4" />
               تفعيل الإشعارات على هذا الجهاز
             </button>
+          )}
+
+          {/* حالة الإشعارات */}
+          {"Notification" in window && notificationPermission === "granted" && (
+            <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-3">
+              <Bell className="w-5 h-5 text-green-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-green-400">الإشعارات مفعلة</p>
+                <p className="text-xs text-green-400/70">ستصلك إشعارات حتى مع إغلاق المتصفح</p>
+              </div>
+            </div>
           )}
         </div>
 

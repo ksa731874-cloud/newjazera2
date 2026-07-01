@@ -27,6 +27,7 @@ import AdminVisitorsPage from "@/pages/AdminVisitorsPage";
 import AdminChangePasswordPage from "@/pages/AdminChangePasswordPage";
 import AdminPageEditorPage from "@/pages/AdminPageEditorPage";
 import AdminTrashPage from "@/pages/AdminTrashPage";
+import AdminDevicesPage from "@/pages/AdminDevicesPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/admin/page-editor" component={AdminPageEditorPage} />
       <Route path="/admin/page-editor/:pageKey" component={AdminPageEditorPage} />
       <Route path="/admin/trash" component={AdminTrashPage} />
+      <Route path="/admin/devices" component={AdminDevicesPage} />
 
       {/* 404 */}
       <Route>
