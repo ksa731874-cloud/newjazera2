@@ -1,48 +1,75 @@
 // FCM Debug Routes - لتسجيل الأخطاء من التطبيق
 import { Router } from "express";
-import { db } from "@workspace/db";
 
 const router = Router();
 
 // ─── تسجيل خطأ FCM من التطبيق ───────────────────────────────────────────
 router.post("/log-error", async (req, res) => {
-  const { 
-    error, 
-    context,
-    deviceInfo,
-    timestamp 
-  } = req.body as {
+  const body = req.body as {
     error?: {
       message?: string;
       code?: string;
+      name?: string;
       stack?: string;
     };
     context?: string;
+    extraData?: Record<string, unknown>;
     deviceInfo?: {
       userAgent?: string;
       platform?: string;
+      vendor?: string;
+      isPWA?: boolean;
+      language?: string;
     };
-    timestamp?: number;
+    appInfo?: {
+      baseUrl?: string;
+      timestamp?: number;
+      date?: string;
+    };
   };
 
   try {
-    console.log("═══════════════════════════════════════════════════");
-    console.log("📱 [FCM ERROR] خطأ FCM من التطبيق:");
-    console.log("───────────────────────────────────────────────────");
-    console.log(`⏰ الوقت: ${new Date(timestamp || Date.now()).toISOString()}`);
-    console.log(`📍 السياق: ${context || 'غير محدد'}`);
-    console.log(`🔧 الجهاز: ${deviceInfo?.userAgent || 'غير معروف'}`);
-    console.log(`❌ الكود: ${error?.code || 'غير محدد'}`);
-    console.log(`💬 الرسالة: ${error?.message || 'غير محددة'}`);
-    if (error?.stack) {
-      console.log(`📋 Stack Trace:`);
-      console.log(error.stack.split('\n').map((line: string) => `   ${line}`).join('\n'));
-    }
-    console.log("═══════════════════════════════════════════════════");
+    const { error, context, extraData, deviceInfo, appInfo } = body;
 
-    // حفظ الخطأ في قاعدة البيانات إذا أردنا تتبعه لاحقاً
-    // يمكن إضافة جدول fcm_errors إذا احتاج الأمر
-    
+    console.log("");
+    console.log("╔══════════════════════════════════════════════════════════════════════╗");
+    console.log("║           📱 [FCM ERROR] خطأ FCM من التطبيق المحمول                ║");
+    console.log("╠══════════════════════════════════════════════════════════════════════╣");
+    console.log(`║ ⏰ الوقت: ${appInfo?.date || new Date().toISOString()}`);
+    console.log(`║ 📍 السياق: ${context || 'غير محدد'}`);
+    console.log("╠══════════════════════════════════════════════════════════════════════╣");
+    console.log("║                         📋 معلومات الجهاز                             ║");
+    console.log("╠══════════════════════════════════════════════════════════════════════╣");
+    console.log(`║ 🔧 User Agent: ${(deviceInfo?.userAgent || 'غير معروف').substring(0, 50)}`);
+    console.log(`║ 💻 Platform: ${deviceInfo?.platform || 'غير محدد'}`);
+    console.log(`║ 🏪 Vendor: ${deviceInfo?.vendor || 'غير محدد'}`);
+    console.log(`║ 📱 PWA Mode: ${deviceInfo?.isPWA ? 'نعم ✅' : 'لا ❌'}`);
+    console.log(`║ 🌍 اللغة: ${deviceInfo?.language || 'غير محددة'}`);
+    console.log("╠══════════════════════════════════════════════════════════════════════╣");
+    console.log("║                          ❌ تفاصيل الخطأ                              ║");
+    console.log("╠══════════════════════════════════════════════════════════════════════╣");
+    console.log(`║ ❌ الكود: ${error?.code || 'غير محدد'}`);
+    console.log(`║ 📛 الاسم: ${error?.name || 'غير محدد'}`);
+    console.log(`║ 💬 الرسالة: ${(error?.message || 'غير محددة').substring(0, 60)}`);
+    if (error?.stack) {
+      console.log("╠══════════════════════════════════════════════════════════════════════╣");
+      console.log("║ 📋 Stack Trace:");
+      const stackLines = error.stack.split('\n');
+      for (const line of stackLines.slice(0, 10)) { // Limit to 10 lines
+        console.log(`║    ${line.trim().substring(0, 65)}`);
+      }
+    }
+    if (extraData && Object.keys(extraData).length > 0) {
+      console.log("╠══════════════════════════════════════════════════════════════════════╣");
+      console.log("║ 📊 بيانات إضافية:");
+      for (const [key, value] of Object.entries(extraData)) {
+        const valueStr = String(value).substring(0, 60);
+        console.log(`║    ${key}: ${valueStr}`);
+      }
+    }
+    console.log("╚══════════════════════════════════════════════════════════════════════╝");
+    console.log("");
+
     res.json({ success: true, logged: true });
   } catch (err) {
     console.error("[FCM DEBUG] Error logging failed:", err);
