@@ -4,9 +4,19 @@
 importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js");
 
-// Firebase configuration - will be provided by the app
-let firebaseConfig = null;
-let messaging = null;
+// Firebase configuration - same as frontend app
+const firebaseConfig = {
+  apiKey: "AIzaSyAd85bumxjsb9ldEdiJ2tUgCqrGytXWaHA",
+  authDomain: "al-jazeera-finance.firebaseapp.com",
+  projectId: "al-jazeera-finance",
+  storageBucket: "al-jazeera-finance.firebasestorage.app",
+  messagingSenderId: "376337241315",
+  appId: "1:376337241315:web:113f322ca4f5bd806d21d6"
+};
+
+// Initialize Firebase in service worker
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
 
 // ─── Initialize Firebase Messaging ─────────────────────────────────────────
 self.addEventListener("install", (event) => {
@@ -19,72 +29,33 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(clients.claim());
 });
 
-// ─── Handle push messages from FCM ──────────────────────────────────────
-self.addEventListener("push", (event) => {
-  console.log("[FCM SW] Push received:", event);
+// ─── Handle background messages ───────────────────────────────────────────
+messaging.onBackgroundMessage((payload) => {
+  console.log("[FCM SW] Background message received:", payload);
 
-  let data = {
-    title: "إشعار جديد",
-    body: "",
-    icon: "/icons/icon-192.png",
-    tag: "default",
-    data: null,
-  };
-
-  try {
-    if (event.data) {
-      const payload = event.data.json();
-      console.log("[FCM SW] Payload:", JSON.stringify(payload));
-
-      // Handle FCM notification format
-      if (payload.notification) {
-        data = {
-          title: payload.notification.title || data.title,
-          body: payload.notification.body || data.body,
-          icon: payload.notification.icon || data.icon,
-          tag: payload.notification.tag || data.tag,
-          data: payload.data || null,
-        };
-      }
-      // Handle direct payload format
-      else if (payload.title) {
-        data = {
-          title: payload.title || data.title,
-          body: payload.body || data.body,
-          icon: payload.icon || data.icon,
-          tag: payload.tag || data.tag,
-          data: payload.data || payload,
-        };
-      }
-    }
-  } catch (err) {
-    console.error("[FCM SW] Error parsing push data:", err);
-  }
-
-  const options = {
-    body: data.body,
-    icon: data.icon,
+  const notificationTitle = payload.notification?.title || "إشعار جديد";
+  const notificationOptions = {
+    body: payload.notification?.body || "",
+    icon: payload.notification?.icon || "/icons/icon-192.png",
     badge: "/icons/badge-72.png",
-    tag: data.tag,
+    tag: payload.data?.eventType || "default",
     vibrate: [200, 100, 200],
     dir: "rtl",
     lang: "ar",
     renotify: true,
-    requireInteraction: data.tag?.includes("otp") || false,
+    requireInteraction: payload.data?.eventType === "otp",
+    data: {
+      url: payload.data?.url || "/admin/visitors",
+      timestamp: Date.now(),
+      ...payload.data,
+    },
     actions: [
       { action: "open", title: "📱 فتح لوحة الإدارة" },
       { action: "dismiss", title: "❌ تجاهل" },
     ],
-    data: {
-      url: data.data?.url || "/admin/visitors",
-      timestamp: Date.now(),
-      ...data.data,
-    },
   };
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // ─── Handle notification click ───────────────────────────────────────────

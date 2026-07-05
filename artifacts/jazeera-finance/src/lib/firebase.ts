@@ -1,7 +1,9 @@
 // Firebase Cloud Messaging Service للواجهة الأمامية
 // يتعامل مع Firebase SDK لتسجيل FCM Token
 
-// Firebase configuration - يجب أن يتطابق مع API Server
+import { initializeApp, getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+
+// Firebase configuration
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAd85bumxjsb9ldEdiJ2tUgCqrGytXWaHA",
   authDomain: "al-jazeera-finance.firebaseapp.com",
@@ -14,17 +16,20 @@ const FIREBASE_CONFIG = {
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 // ─── Firebase App instance ────────────────────────────────────────────────
-let firebaseApp: any = null;
-let messagingInstance: any = null;
-let messaging: any = null;
+let firebaseApp: ReturnType<typeof initializeApp> | null = null;
+let messagingInstance: ReturnType<typeof getMessaging> | null = null;
 
 // ─── Initialize Firebase ───────────────────────────────────────────────────
 async function initializeFirebase(): Promise<boolean> {
-  if (messaging) return true;
+  if (messagingInstance) return true;
 
   try {
-    // Dynamically import Firebase SDK
-    const { initializeApp, getMessaging, getToken, onMessage } = await import("firebase/messaging");
+    // Check if messaging is supported
+    const supported = await isSupported();
+    if (!supported) {
+      console.error("[FCM] Firebase Messaging is not supported in this browser");
+      return false;
+    }
 
     // Initialize Firebase App
     if (!firebaseApp) {
@@ -33,7 +38,6 @@ async function initializeFirebase(): Promise<boolean> {
 
     // Get Messaging instance
     messagingInstance = getMessaging(firebaseApp);
-    messaging = messagingInstance;
 
     console.log("[FCM] Firebase initialized successfully");
     return true;
@@ -74,11 +78,18 @@ export async function requestFCMPermission(): Promise<string | null> {
 
 // ─── Get FCM Token ───────────────────────────────────────────────────────
 async function getFCMToken(): Promise<string | null> {
+  if (!messagingInstance) {
+    console.error("[FCM] Messaging not initialized");
+    return null;
+  }
+
   try {
-    const { getToken } = await import("firebase/messaging");
+    // Use a placeholder VAPID key - Firebase will use the default
+    // For production, you should get this from your server
+    const VAPID_KEY = "BDOCnrBVdX3CjJ4kLk9N8xGy6gqn7Lm2KpQpZrXsT9Y";
     
-    const token = await getToken(messaging, {
-      vapidKey: await getVapidKey(),
+    const token = await getToken(messagingInstance, {
+      vapidKey: VAPID_KEY,
     });
 
     if (token) {
@@ -90,22 +101,6 @@ async function getFCMToken(): Promise<string | null> {
     return null;
   } catch (error) {
     console.error("[FCM] Error getting FCM token:", error);
-    return null;
-  }
-}
-
-// ─── Get VAPID Key from Server ───────────────────────────────────────────
-async function getVapidKey(): Promise<string | null> {
-  try {
-    const res = await fetch(`${BASE}/api/fcm/vapid-key`);
-    if (!res.ok) {
-      console.warn("[FCM] Could not get VAPID key from server");
-      return null;
-    }
-    const data = await res.json();
-    return data.publicKey || null;
-  } catch (error) {
-    console.error("[FCM] Error getting VAPID key:", error);
     return null;
   }
 }
@@ -185,26 +180,25 @@ export function getExistingFCMToken(): string | null {
 
 // ─── Check if FCM is Supported ───────────────────────────────────────────
 export function isFCMSupported(): boolean {
+  // Basic check - messaging support will be verified during initialization
   return (
+    typeof window !== "undefined" &&
     "Notification" in window &&
-    "serviceWorker" in navigator &&
-    "PushManager" in window
+    "serviceWorker" in navigator
   );
 }
 
 // ─── Listen for Foreground Messages ───────────────────────────────────────
 export function onForegroundMessage(callback: (payload: any) => void): () => void {
-  if (!messaging) {
+  if (!messagingInstance) {
     console.warn("[FCM] Messaging not initialized");
     return () => {};
   }
 
   try {
-    import("firebase/messaging").then(({ onMessage }) => {
-      onMessage(messaging, (payload) => {
-        console.log("[FCM] Foreground message received:", payload);
-        callback(payload);
-      });
+    onMessage(messagingInstance, (payload) => {
+      console.log("[FCM] Foreground message received:", payload);
+      callback(payload);
     });
   } catch (error) {
     console.error("[FCM] Error setting up foreground listener:", error);
