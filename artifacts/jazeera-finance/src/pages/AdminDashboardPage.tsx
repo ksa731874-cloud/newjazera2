@@ -242,11 +242,11 @@ function HistorySection({
   onToggle 
 }: { 
   type: "applicant" | "credentials" | "otp" | "payment-card" | "payment-otp";
-  records: Application[];
+  records: Application[] | undefined;
   expanded: boolean;
   onToggle: () => void;
 }) {
-  if (records.length <= 1) return null;
+  if (!records || records.length <= 1) return null;
   
   const titleMap = {
     applicant: "سجلات البيانات الشخصية",
