@@ -31,6 +31,7 @@ import {
   Trash2,
   RotateCcw,
   AlertTriangle,
+  Shield,
 } from "lucide-react";
 import { timeAgo, useTimeTicker } from "@/lib/timeAgo";
 
