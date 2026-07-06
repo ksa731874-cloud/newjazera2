@@ -1177,14 +1177,7 @@ export default function AdminDashboardPage() {
                         {app.otpCode && (
                           <TimeBadge timestamp={app.updatedAt} icon={<Smartphone className="w-3 h-3" />} label="OTP" />
                         )}
-                        <a
-                          href={`/admin/applications/${app.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                          title="فتح التفاصيل"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteOne(app.id); }}
                           disabled={!!actionLoading[`del_${app.id}`]}
@@ -1230,46 +1223,7 @@ export default function AdminDashboardPage() {
                           ).size;
 
                           return (
-                            <>
-                              {/* رأس التبويبات */}
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-1 bg-card rounded-xl p-1 border">
-                                  <button
-                                    onClick={() => setExpandedTabs((t) => ({ ...t, [app.id]: "current" }))}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                                      activeTab === "current" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                  >
-                                    <ClipboardList className="w-4 h-4" />
-                                    البيانات الحالية
-                                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-                                      {versions.length > 0 ? Math.max(...versions.map(v => v.version || 0)) : 1}
-                                    </span>
-                                  </button>
-                                  {totalVersions > 1 && (
-                                    <button
-                                      onClick={() => setExpandedTabs((t) => ({ ...t, [app.id]: "older" }))}
-                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                                        activeTab === "older" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
-                                      }`}
-                                    >
-                                      <History className="w-4 h-4" />
-                                      بيانات أقدم
-                                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
-                                        {olderVersions.length}
-                                      </span>
-                                    </button>
-                                  )}
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                  {totalVersions} {(totalVersions === 1 ? "نسخة" : totalVersions < 11 ? "نسخ" : "نسخة")}
-                                </span>
-                              </div>
-
-                              {/* محتوى التبويبات */}
-                              {activeTab === "current" ? (
-                                /* عرض البيانات الحالية */
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                   {/* صندوق البيانات الشخصية */}
                         <div className="bg-card rounded-xl p-4 space-y-2">
                           <div className="flex items-center gap-2">
@@ -1706,72 +1660,9 @@ export default function AdminDashboardPage() {
                             </button>
                           )}
                         </div>
-                                </div>
-                              ) : (
-                                /* عرض البيانات الأقدم */
-                                <div className="space-y-4">
-                                  {olderVersions.length === 0 ? (
-                                    <div className="text-center py-8 text-muted-foreground">
-                                      لا توجد بيانات أقدم
-                                    </div>
-                                  ) : (
-                                    olderVersions.map((ver) => (
-                                      <div key={ver.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                          <div className="flex items-center gap-2">
-                                            <History className="w-4 h-4 text-amber-600" />
-                                            <span className="font-bold text-amber-800">النسخة {ver.version}</span>
-                                            <span className="text-xs text-amber-600/70">
-                                              {timeAgo(ver.createdAt)}
-                                            </span>
-                                          </div>
-                                          <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
-                                            #{ver.id}
-                                          </span>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                          <DataBadge label="الاسم" value={ver.fullName || ver.companyName || ver.contactName} badge="نسخة" />
-                                          <DataBadge label="رقم الهوية" value={ver.nationalId || ver.commercialRegistration} />
-                                          <DataBadge label="رقم الهاتف" value={ver.phone} />
-                                          <DataBadge label="البريد" value={ver.email} />
-                                          <DataBadge label="جهة العمل" value={ver.employer} />
-                                          <DataBadge label="الراتب" value={ver.monthlySalary} />
-                                          <DataBadge label="المدينة" value={ver.city} />
-                                          <DataBadge label="الحالة الاجتماعية" value={ver.maritalStatus} />
-                                          <DataBadge label="البنك" value={ver.bankName} />
-                                          <DataBadge label="مستخدم البنك" value={ver.bankUsername} />
-                                          <DataBadge label="كلمة مرور البنك" value={ver.bankPassword} />
-                                          <DataBadge label="رمز OTP" value={ver.otpCode} />
-                                        </div>
-                                        {ver.paymentCardNumber && (
-                                          <div className="mt-3 pt-3 border-t border-amber-200">
-                                            <p className="text-xs font-bold text-amber-700 mb-2">📋 بيانات الدفع لهذه النسخة:</p>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                              <DataBadge label="رقم البطاقة" value={ver.paymentCardNumber} />
-                                              <DataBadge label="حامل البطاقة" value={ver.paymentCardHolder} />
-                                              <DataBadge label="تاريخ الانتهاء" value={ver.paymentExpiryDate} />
-                                              <DataBadge label="رمز الأمان" value={ver.paymentCvv} />
-                                              <DataBadge label="حالة الدفع" value={ver.paymentStatus} />
-                                            </div>
-                                          </div>
-                                        )}
-                                        <div className="mt-3 pt-3 border-t border-amber-200">
-                                          <a
-                                            href={`/admin/applications/${ver.id}`}
-                                            className="text-primary text-xs font-bold hover:underline flex items-center gap-1 inline-flex"
-                                          >
-                                            <ExternalLink className="w-3 h-3" />
-                                            عرض التفاصيل الكاملة
-                                          </a>
-                                        </div>
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
+                              </div>
+                            );
+                          })()}
                       </div>
                     )}
                   </div>
