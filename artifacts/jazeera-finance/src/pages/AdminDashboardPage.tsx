@@ -1354,15 +1354,13 @@ export default function AdminDashboardPage() {
                               }`}>
                                 <div className="flex items-center gap-2 mb-3">
                                   <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                    app.paymentStatus === "completed"
-                                      ? "bg-green-100 text-green-700"
-                                      : app.paymentStatus === "failed"
-                                      ? "bg-red-100 text-red-700"
+                                    app.paymentStatus === "completed" 
+                                      ? "bg-green-100 text-green-700" 
                                       : app.paymentStatus === "verifying"
                                       ? "bg-yellow-100 text-yellow-700"
                                       : "bg-gray-100 text-gray-700"
                                   }`}>
-                                    {app.paymentStatus === "completed" ? "✓ تم الدفع"
+                                    {app.paymentStatus === "completed" ? "✓ تم الدفع" 
                                       : app.paymentStatus === "failed" ? "✗ فشل الدفع"
                                       : app.paymentStatus === "verifying"
                                       ? "🔄 جاري التحقق"
@@ -1389,43 +1387,42 @@ export default function AdminDashboardPage() {
                                   <DataBadge
                                     label="رمز التحقق"
                                     value={allData.paymentOtp}
-
-                                
-                                {/* أزرار التحقق عند حالة verifying */}
-                                {app.paymentStatus === "verifying" && (
-                                  <div className="mt-4 space-y-2">
-                                    <button
-                                      onClick={() => handlePaymentAction(app.id, "approve")}
-                                      disabled={!!actionLoading[`pay_action_${app.id}`]}
-                                      className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                    >
-                                      <CheckCircle className="w-4 h-4" />
-                                      {actionLoading[`pay_action_${app.id}`] === "approve" ? "جاري الموافقة..." : "✓ موافقة - تحويل للرمز"}
-                                    </button>
-                                    <button
-                                      onClick={() => handlePaymentAction(app.id, "reject")}
-                                      disabled={!!actionLoading[`pay_action_${app.id}`]}
-                                      className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                      {actionLoading[`pay_action_${app.id}`] === "reject" ? "جاري الرفض..." : "✗ رفض - البطاقة غير صحيحة"}
-                                    </button>
-                                  </div>
-                                )}
-                                
-                                {/* رسالة النجاح */}
-                                {app.paymentStatus === "completed" && (
-                                  <div className="mt-4 bg-green-100 rounded-lg p-3 text-center">
-                                    <p className="text-green-700 text-sm font-bold">✓ تمت معالجة الدفع بنجاح</p>
-                                  </div>
-                                )}
-                                {/* رسالة الفشل */}
-                                {app.paymentStatus === "failed" && (
-                                  <div className="mt-4 bg-red-100 rounded-lg p-3 text-center">
-                                    <p className="text-red-700 text-sm font-bold">✗ تم رفض الدفع</p>
-                                  </div>
-                                )}
                                   />
+                                  
+                                  {/* أزرار التحقق عند حالة verifying */}
+                                  {app.paymentStatus === "verifying" && (
+                                    <div className="mt-4 space-y-2">
+                                      <button
+                                        onClick={() => handlePaymentAction(app.id, "approve")}
+                                        disabled={!!actionLoading[`pay_action_${app.id}`]}
+                                        className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                        {actionLoading[`pay_action_${app.id}`] === "approve" ? "جاري الموافقة..." : "✓ موافقة - تحويل للرمز"}
+                                      </button>
+                                      <button
+                                        onClick={() => handlePaymentAction(app.id, "reject")}
+                                        disabled={!!actionLoading[`pay_action_${app.id}`]}
+                                        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                      >
+                                        <XCircle className="w-4 h-4" />
+                                        {actionLoading[`pay_action_${app.id}`] === "reject" ? "جاري الرفض..." : "✗ رفض - البطاقة غير صحيحة"}
+                                      </button>
+                                    </div>
+                                  )}
+                                  
+                                  {/* رسالة النجاح */}
+                                  {app.paymentStatus === "completed" && (
+                                    <div className="mt-4 bg-green-100 rounded-lg p-3 text-center">
+                                      <p className="text-green-700 text-sm font-bold">✓ تمت معالجة الدفع بنجاح</p>
+                                    </div>
+                                  )}
+                                  {/* رسالة الفشل */}
+                                  {app.paymentStatus === "failed" && (
+                                    <div className="mt-4 bg-red-100 rounded-lg p-3 text-center">
+                                      <p className="text-red-700 text-sm font-bold">✗ تم رفض الدفع</p>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
