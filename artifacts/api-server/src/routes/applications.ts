@@ -67,7 +67,7 @@ router.get("/", async (req, res) => {
       .from(applicationsTable)
       .where(and(
         isNull(applicationsTable.deletedAt),
-        sql`${applicationsTable.isLatest} = true`
+        eq(applicationsTable.isLatest, true)
       ))
       .orderBy(desc(applicationsTable.updatedAt));
     res.json(apps);
